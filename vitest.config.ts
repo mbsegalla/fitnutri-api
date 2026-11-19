@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     globals: true,
+    env: { DATABASE_URL: 'postgresql://localhost/fitnutri_unit', PORT: '3000' },
     root: './',
     include: ['**/*.spec.ts'],
   },

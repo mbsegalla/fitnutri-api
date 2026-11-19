@@ -90,3 +90,6 @@ pids/
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Generated Prisma client
+/src/generated/prisma/
