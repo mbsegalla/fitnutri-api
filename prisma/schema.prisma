@@ -77,6 +77,9 @@ enum PaymentState {
 }
 
 model Contract {
+  intake         Intake?
+  assessments    Assessment[]
+  documents      CareDocument[]
   id             String         @id @default(uuid()) @db.Uuid
   clientId       String         @db.Uuid
   client         Account        @relation("Client", fields: [clientId], references: [id], onDelete: Cascade)
@@ -96,4 +99,41 @@ model Contract {
 
   @@unique([clientId, requestKey])
   @@index([professionalId, status])
+}
+
+model Intake {
+  contractId String    @id @db.Uuid
+  contract   Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  answers    Json
+  reviewedAt DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
+model Assessment {
+  id         String   @id @default(uuid()) @db.Uuid
+  contractId String   @db.Uuid
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  authorId   String   @db.Uuid
+  assessedAt DateTime
+  measures   Json
+  notes      String
+
+  @@index([contractId, assessedAt])
+}
+
+model CareDocument {
+  id                String    @id @default(uuid()) @db.Uuid
+  contractId        String    @db.Uuid
+  contract          Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  kind              String
+  filename          String
+  contentType       String
+  content           Bytes
+  authorId          String    @db.Uuid
+  createdAt         DateTime  @default(now())
+  analysisDraft     String?
+  publishedAnalysis String?
+  publishedAt       DateTime?
+
+  @@index([contractId, createdAt])
 }

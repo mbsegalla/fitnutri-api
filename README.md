@@ -101,3 +101,9 @@ Cadastre uma oferta com `POST /professionals/me/offers` e `{"title":"Mensal","de
 ### Contratação e vínculo no Postman
 
 Como cliente, envie `POST /contracts` com `offerId` e `requestKey` (UUID novo para cada contratação, reutilizado em retries). Com o token do profissional, consulte `GET /contracts` e envie `PATCH /contracts/{id}` com `{"action":"ACCEPT"}` ou `DECLINE`. O cliente pode usar `CANCEL` enquanto pendente. Após o aceite, ambos podem usar `END`. A oferta gratuita é ativada no aceite. Uma oferta paga aceita permanece inativa até confirmação financeira. Consulte o vínculo e as condições originais em `GET /contracts/{id}`.
+
+### Avaliações e arquivos privados no Postman
+
+Em um contrato gratuito aceito, use o token do cliente em `PUT /contracts/{id}/intake` com `{"goal":"Ganhar força","routine":"Expediente comercial"}`. Há campos específicos para hábitos alimentares ou experiência de treino. O profissional consulta e marca como revisada em `PUT /contracts/{id}/intake/review`, e registra medidas em `POST /contracts/{id}/assessments` com `assessedAt`, `notes` e `measures` (itens com `label`, `value` e `unit`).
+
+Como cliente, envie **form-data** em `POST /contracts/{id}/documents`, campos `kind=EXAM` e `file` do tipo File (PDF, JPEG ou PNG, até 5 MiB). Para foto, use `PROGRESS_PHOTO` e JPEG ou PNG. O binário fica no PostgreSQL privado. Como profissional, baixe em `GET /contracts/{id}/documents/{documentId}/file` e envie `PUT .../{documentId}/analysis` com `{"text":"Devolutiva do profissional","publish":true}`. O cliente consulta o texto publicado em `GET /contracts/{id}/documents`. Outro vínculo exige autorização independente.
