@@ -1,6 +1,7 @@
 export interface Environment {
   DATABASE_URL: string;
   PORT: number;
+  SWAGGER_ENABLED: boolean;
 }
 
 export function validateEnvironment(values: Record<string, unknown>): Environment {
@@ -22,5 +23,15 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
     throw new Error('PORT must be an integer between 1 and 65535');
   }
 
-  return { DATABASE_URL: databaseUrl, PORT: Number(port) };
+  const swaggerEnabled = values.SWAGGER_ENABLED;
+
+  if (swaggerEnabled !== undefined && swaggerEnabled !== 'true' && swaggerEnabled !== 'false') {
+    throw new Error('SWAGGER_ENABLED must be true or false');
+  }
+
+  return {
+    DATABASE_URL: databaseUrl,
+    PORT: Number(port),
+    SWAGGER_ENABLED: swaggerEnabled === undefined ? values.NODE_ENV !== 'production' : swaggerEnabled === 'true',
+  };
 }

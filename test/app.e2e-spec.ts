@@ -5,6 +5,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 
 import { AppModule } from '../src/app.module.js';
+import { setupSwagger } from '../src/infrastructure/http/swagger/swagger.setup.js';
 
 describe('Fit Nutri API (e2e)', () => {
   async function startApp(databaseUrl?: string) {
@@ -17,10 +18,44 @@ describe('Fit Nutri API (e2e)', () => {
     const moduleRef = await builder.compile();
     const app = moduleRef.createNestApplication<INestApplication<App>>();
 
+    setupSwagger(app);
+
     await app.init();
 
     return app;
   }
+
+  it('serves the documentation UI and the OpenAPI contract for health checks', async () => {
+    const app = await startApp();
+
+    try {
+      const api = request(app.getHttpServer());
+
+      await api.get('/docs').expect(200).expect('Content-Type', /html/);
+
+      const document = await api.get('/docs-json').expect(200).expect('Content-Type', /json/);
+
+      expect(document.body).toMatchObject({
+        info: { title: 'Fit Nutri API' },
+        paths: {
+          '/health/live': {
+            get: { tags: ['Health'], responses: { '200': { description: 'The HTTP process is responding.' } } },
+          },
+          '/health/ready': {
+            get: {
+              tags: ['Health'],
+              responses: {
+                '200': { description: 'The database answered the readiness query.' },
+                '503': { description: 'The database did not answer the readiness query.' },
+              },
+            },
+          },
+        },
+      });
+    } finally {
+      await app.close();
+    }
+  });
 
   it('reports readiness against the test database', async () => {
     const app = await startApp();

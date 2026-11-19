@@ -15,6 +15,12 @@ pnpm start:dev
 
 O Compose expõe o PostgreSQL de desenvolvimento em `127.0.0.1:5432` e mantém os dados em um volume. A API lê `DATABASE_URL` e `PORT` na inicialização. A porta padrão da API é 3000.
 
+### Documentação da API
+
+Com a API em execução, abra [Swagger UI](http://localhost:3000/docs). Em **Health**, selecione uma operação e clique em **Try it out** e **Execute** para ver a resposta do seu ambiente. Para importar o contrato no Postman, use o [documento OpenAPI em JSON](http://localhost:3000/docs-json).
+
+A interface e o JSON ficam disponíveis por padrão em desenvolvimento. Com `NODE_ENV=production`, ficam desativados por padrão. Defina `SWAGGER_ENABLED=true` ou `SWAGGER_ENABLED=false` para escolher explicitamente e reinicie a aplicação.
+
 ### Verificar a API
 
 Acesse os endpoints no navegador ou no Postman:
