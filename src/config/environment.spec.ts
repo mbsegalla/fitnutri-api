@@ -46,4 +46,16 @@ describe('validateEnvironment', () => {
       expect(() => validateEnvironment({ AUTH_JWT_SECRET, DATABASE_URL: url })).toThrow(/DATABASE_URL/);
     },
   );
+  it('validates complete video credentials and requires TLS outside local development', () => {
+    const base = {
+      AUTH_JWT_SECRET,
+      DATABASE_URL,
+      LIVEKIT_URL: 'ws://127.0.0.1:7880',
+      LIVEKIT_API_KEY: 'local',
+      LIVEKIT_API_SECRET: 'a'.repeat(32),
+    };
+    expect(validateEnvironment(base).LIVEKIT_URL).toBe(base.LIVEKIT_URL);
+    expect(() => validateEnvironment({ ...base, LIVEKIT_API_SECRET: '' })).toThrow(/LIVEKIT/);
+    expect(() => validateEnvironment({ ...base, NODE_ENV: 'production' })).toThrow(/LIVEKIT/);
+  });
 });

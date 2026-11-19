@@ -10,6 +10,7 @@ datasource db {
 }
 
 model Account {
+  slots             AvailabilitySlot[]
   notifications     Notification[]
   id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name              String               @db.VarChar(120)
@@ -78,6 +79,7 @@ enum PaymentState {
 }
 
 model Contract {
+  appointments   Appointment[]
   messages       Message[]
   checkIns       CheckIn[]
   plans          PlanVersion[]
@@ -246,4 +248,32 @@ model Notification {
 
   @@unique([accountId, eventKey])
   @@index([accountId, createdAt, id])
+}
+
+model AvailabilitySlot {
+  id             String        @id @default(uuid()) @db.Uuid
+  professionalId String        @db.Uuid
+  professional   Account       @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  startsAt       DateTime      @db.Timestamptz(3)
+  endsAt         DateTime      @db.Timestamptz(3)
+  timeZone       String
+  format         CareFormat
+  appointments   Appointment[]
+
+  @@unique([professionalId, startsAt])
+}
+
+model Appointment {
+  id            String           @id @default(uuid()) @db.Uuid
+  contractId    String           @db.Uuid
+  contract      Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  slotId        String           @db.Uuid
+  slot          AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  initialSlotId String           @db.Uuid
+  requestKey    String           @db.Uuid
+  revision      Int              @default(1)
+  canceledAt    DateTime?
+
+  @@unique([contractId, requestKey])
+  @@index([slotId, canceledAt])
 }

@@ -1,4 +1,7 @@
 export interface Environment {
+  LIVEKIT_URL?: string;
+  LIVEKIT_API_KEY?: string;
+  LIVEKIT_API_SECRET?: string;
   DATABASE_URL: string;
   AUTH_JWT_SECRET: string;
   AUTH_ACCESS_TOKEN_TTL_SECONDS: number;
@@ -43,7 +46,36 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
     throw new Error('AUTH_ACCESS_TOKEN_TTL_SECONDS must be an integer between 1 and 86400');
   }
 
+  const videoUrl = values.LIVEKIT_URL || undefined;
+  const videoKey = values.LIVEKIT_API_KEY || undefined;
+  const videoSecret = values.LIVEKIT_API_SECRET || undefined;
+
+  if (videoUrl || videoKey || videoSecret) {
+    const target = typeof videoUrl === 'string' ? URL.parse(videoUrl) : null;
+    const local =
+      target && ['127.0.0.1', 'localhost', '[::1]'].includes(target.hostname) && values.NODE_ENV !== 'production';
+
+    if (
+      !target ||
+      !target.hostname ||
+      target.username ||
+      target.password ||
+      target.search ||
+      target.hash ||
+      !(target.protocol === 'wss:' || (local && target.protocol === 'ws:')) ||
+      typeof videoKey !== 'string' ||
+      !/^[a-zA-Z0-9_-]{3,128}$/.test(videoKey) ||
+      typeof videoSecret !== 'string' ||
+      videoSecret.length < 32
+    ) {
+      throw new Error('LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET require a valid video configuration');
+    }
+  }
+
   return {
+    LIVEKIT_URL: typeof videoUrl === 'string' ? videoUrl : undefined,
+    LIVEKIT_API_KEY: typeof videoKey === 'string' ? videoKey : undefined,
+    LIVEKIT_API_SECRET: typeof videoSecret === 'string' ? videoSecret : undefined,
     AUTH_JWT_SECRET: secret,
     AUTH_ACCESS_TOKEN_TTL_SECONDS: Number(ttl),
     DATABASE_URL: databaseUrl,

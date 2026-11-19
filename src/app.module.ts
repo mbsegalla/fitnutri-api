@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ConfigurationModule } from './config/configuration.module.js';
+import { AgendaModule } from './modules/agenda/agenda.module.js';
 import { AssessmentsModule } from './modules/assessments/assessments.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CoachingModule } from './modules/coaching/coaching.module.js';
@@ -13,6 +14,7 @@ import { TrainingModule } from './modules/training/training.module.js';
 
 @Module({
   imports: [
+    AgendaModule,
     MessagingModule,
     FollowUpModule,
     TrainingModule,

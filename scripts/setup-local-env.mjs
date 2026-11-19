@@ -26,14 +26,16 @@ function setupLocalEnv() {
     updated += separator + key + '=' + value + newline;
   }
 
-  const secret = parseEnv(updated).AUTH_JWT_SECRET;
+  for (const key of ['AUTH_JWT_SECRET', 'LIVEKIT_API_SECRET']) {
+    const secret = parseEnv(updated)[key];
 
-  if (!secret || secret === secretPlaceholder) {
-    const generated = randomBytes(32).toString('hex');
-    updated = updated.replace(
-      /^([ \t]*(?:export[ \t]+)?AUTH_JWT_SECRET[ \t]*=)[^#\r\n]*(#[^\r\n]*)?/gm,
-      (_, prefix, comment) => prefix + generated + (comment ? ' ' + comment : ''),
-    );
+    if (!secret || secret === secretPlaceholder) {
+      const generated = randomBytes(32).toString('hex');
+      updated = updated.replace(
+        new RegExp('^([ \\t]*(?:export[ \\t]+)?' + key + '[ \\t]*=)[^#\\r\\n]*(#[^\\r\\n]*)?', 'gm'),
+        (_, prefix, comment) => prefix + generated + (comment ? ' ' + comment : ''),
+      );
+    }
   }
 
   if (!existing || updated !== original) {
