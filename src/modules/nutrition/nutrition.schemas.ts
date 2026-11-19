@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 const label = z.string().trim().min(1).max(200);
 const notes = z.string().trim().max(2000);
 const food = z.strictObject({ name: label, portion: label, substitutions: z.array(label).max(20).default([]) });

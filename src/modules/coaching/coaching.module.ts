@@ -5,6 +5,7 @@ import { AuthModule } from '../auth/auth.module.js';
 
 import { CoachingController } from './coaching.controller.js';
 import { CoachingService } from './coaching.service.js';
+
 @Module({
   imports: [AuthModule, DatabaseModule],
   controllers: [CoachingController],

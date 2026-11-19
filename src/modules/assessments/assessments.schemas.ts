@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 const paragraph = z.string().trim().min(1).max(4000);
 export const intakeSchema = z.strictObject({
   goal: paragraph,

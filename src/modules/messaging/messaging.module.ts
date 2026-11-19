@@ -6,6 +6,7 @@ import { CoachingModule } from '../coaching/coaching.module.js';
 
 import { MessagingController } from './messaging.controller.js';
 import { MessagingService } from './messaging.service.js';
+
 @Module({
   imports: [AuthModule, DatabaseModule, CoachingModule],
   controllers: [MessagingController],

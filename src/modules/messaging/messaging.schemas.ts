@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 export const page = z.strictObject({
   before: z.uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),

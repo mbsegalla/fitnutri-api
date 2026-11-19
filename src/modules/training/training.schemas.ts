@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 const label = z.string().trim().min(1).max(200);
 const note = z.string().trim().max(2000);
 const baseExercise = z.object({

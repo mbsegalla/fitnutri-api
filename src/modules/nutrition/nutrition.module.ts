@@ -7,6 +7,7 @@ import { PlanVersionsModule } from '../planVersions/planVersions.module.js';
 
 import { NutritionController } from './nutrition.controller.js';
 import { NutritionService } from './nutrition.service.js';
+
 @Module({
   imports: [AuthModule, DatabaseModule, CoachingModule, PlanVersionsModule],
   controllers: [NutritionController],

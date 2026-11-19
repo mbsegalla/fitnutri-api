@@ -22,17 +22,20 @@ export class StripeEventsService {
     @Inject(ConfigService) private readonly config: ConfigService<Environment, true>,
     @Inject(PrismaService) private readonly db: PrismaService,
   ) {}
+
   async receive(body: Buffer | undefined, signature: string | undefined) {
     const secret = this.config.get('STRIPE_TEST_WEBHOOK_SECRET', { infer: true });
 
     if (!secret) {
       throw new ServiceUnavailableException('Stripe sandbox webhook is not configured');
     }
+
     if (!body || !signature) {
       throw new BadRequestException('Signed body required');
     }
 
     let verified: unknown;
+
     try {
       verified = Stripe.webhooks.constructEvent(body, signature, secret);
     } catch {
@@ -40,6 +43,7 @@ export class StripeEventsService {
     }
 
     const parsed = envelope.safeParse(verified);
+
     if (!parsed.success) {
       throw new BadRequestException('Expected a sandbox event with an object ID');
     }
@@ -57,6 +61,7 @@ export class StripeEventsService {
       ],
       skipDuplicates: true,
     });
+
     return { received: true };
   }
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 const instant = z.iso.datetime({ offset: true });
 const timeZone = z
   .string()
@@ -6,6 +7,7 @@ const timeZone = z
   .refine((v) => {
     try {
       new Intl.DateTimeFormat('en', { timeZone: v });
+
       return true;
     } catch {
       return false;

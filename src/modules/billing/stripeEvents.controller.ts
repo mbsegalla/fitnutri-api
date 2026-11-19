@@ -12,10 +12,12 @@ import type { Request } from 'express';
 import { z } from 'zod';
 
 import { StripeEventsService } from './stripeEvents.service.js';
+
 @ApiTags('Billing')
 @Controller('billing/stripe')
 export class StripeEventsController {
   constructor(@Inject(StripeEventsService) private readonly events: StripeEventsService) {}
+
   @Post('webhook')
   @HttpCode(200)
   @ApiOperation({ summary: 'Receive a signed Stripe sandbox event' })

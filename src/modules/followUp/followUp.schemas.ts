@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { assessmentView } from '../assessments/assessments.schemas.js';
 import { logsView } from '../nutrition/nutrition.schemas.js';
 import { sessionsView } from '../training/training.schemas.js';
+
 const text = z.string().trim().min(1).max(3000);
 export const checkInput = z.strictObject({
   weekStart: z.iso.date().refine((v) => new Date(v + 'T12:00:00Z').getUTCDay() === 1, 'Use the Monday of the week'),

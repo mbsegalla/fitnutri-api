@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { modalitySchema, offerSchema } from '../profiles/profiles.schemas.js';
+
 export const requestSchema = z.strictObject({ offerId: z.uuid(), requestKey: z.uuid() });
 export const transitionSchema = z.strictObject({ action: z.enum(['ACCEPT', 'DECLINE', 'CANCEL', 'END']) });
 export const contractSchema = z.object({

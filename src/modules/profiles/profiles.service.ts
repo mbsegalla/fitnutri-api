@@ -64,6 +64,7 @@ export class ProfilesService {
     if (!result.success) {
       throw new BadRequestException('Complete the profile and in-person location before publishing');
     }
+
     if (current.offers.some((o) => !result.data.modalities.includes(o.modality))) {
       throw new ConflictException('An offer uses a modality missing from this profile');
     }
@@ -84,6 +85,7 @@ export class ProfilesService {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('Slug already in use');
       }
+
       throw error;
     }
   }

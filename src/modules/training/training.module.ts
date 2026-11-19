@@ -7,6 +7,7 @@ import { PlanVersionsModule } from '../planVersions/planVersions.module.js';
 
 import { TrainingController } from './training.controller.js';
 import { TrainingService } from './training.service.js';
+
 @Module({
   imports: [AuthModule, DatabaseModule, CoachingModule, PlanVersionsModule],
   controllers: [TrainingController],

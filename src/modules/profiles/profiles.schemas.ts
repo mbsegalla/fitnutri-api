@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 export const modalitySchema = z.enum(['NUTRITION', 'PERSONAL_TRAINING']);
 const format = z.enum(['ONLINE', 'IN_PERSON']);
 const text = z.string().trim().min(1).max(200);

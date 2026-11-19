@@ -13,6 +13,7 @@ export interface Access {
   active?: boolean;
   modality?: Modality;
 }
+
 @Injectable()
 export class CoachingService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
@@ -24,22 +25,28 @@ export class CoachingService {
       if (contract.offerId !== input.offerId) {
         throw new ConflictException('Request key already used for another offer');
       }
+
       return contract;
     };
     const prior = await existing();
+
     if (prior) {
       return replay(prior);
     }
 
     const offer = await this.db.offer.findFirst({ where: { id: input.offerId, profile: { published: true } } });
+
     if (!offer) {
       throw new NotFoundException('Offer not available');
     }
+
     if (offer.professionalId === clientId) {
       throw new BadRequestException('Cannot contract your own offer');
     }
+
     const { id, professionalId, ...data } = offer;
     const terms = offerSchema.parse(data);
+
     try {
       return await this.db.contract.create({
         data: {
@@ -55,11 +62,14 @@ export class CoachingService {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const previous = await existing();
+
         if (previous) {
           return replay(previous);
         }
+
         throw new ConflictException('An open contract already exists for this modality');
       }
+
       throw error;
     }
   }
@@ -75,9 +85,11 @@ export class CoachingService {
     const contract = await this.db.contract.findFirst({
       where: { id, OR: [{ clientId: accountId }, { professionalId: accountId }] },
     });
+
     if (!contract) {
       throw new NotFoundException('Contract not found');
     }
+
     return contract;
   }
 
@@ -91,6 +103,7 @@ export class CoachingService {
       const [contract] = await tx.$queryRaw<
         Contract[]
       >`SELECT * FROM "Contract" WHERE id=${id}::uuid AND ("clientId"=${accountId}::uuid OR "professionalId"=${accountId}::uuid) FOR UPDATE`;
+
       if (
         !contract ||
         (access.role === 'client' && contract.clientId !== accountId) ||
@@ -99,23 +112,29 @@ export class CoachingService {
       ) {
         throw new NotFoundException('Contract not found');
       }
+
       if (access.active && !contract.active) {
         throw new ConflictException('An active relationship is required');
       }
+
       return work(tx, contract);
     });
   }
 
   transition(accountId: string, id: string, { action }: z.infer<typeof transitionSchema>) {
     const role = action === 'END' ? undefined : action === 'CANCEL' ? 'client' : 'professional';
+
     return this.withAccess(accountId, id, { role }, async (tx, c) => {
       const target = { ACCEPT: 'ACCEPTED', DECLINE: 'DECLINED', CANCEL: 'CANCELED', END: 'ENDED' } as const;
+
       if (c.status === target[action]) {
         return c;
       }
+
       if (c.status !== (action === 'END' ? 'ACCEPTED' : 'REQUESTED')) {
         throw new ConflictException('Invalid contract transition');
       }
+
       const activate = action === 'ACCEPT' && c.payment !== 'UNPAID';
 
       return tx.contract.update({
