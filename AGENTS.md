@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Environment variables
+
+When adding a required environment variable, update validation, the local setup in `.env.example`, and the test environments that need it. Use working development values for ordinary settings and generate per-installation secrets in `pnpm env:setup`. Keep optional overrides documented alongside the defaults.
+
 ## TypeScript spacing
 
 Group related statements and use one blank line when the next statement starts a new step. Keep related declarations together, then leave a blank line before an `if`, `try`, or function declaration. In bootstrap code, separate application creation, lifecycle setup, configuration, and listening. Leave a blank line between the bootstrap function and its invocation.

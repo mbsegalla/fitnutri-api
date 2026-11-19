@@ -4,21 +4,20 @@ Backend do Fit Nutri em NestJS e TypeScript.
 
 ## Desenvolvimento local
 
-Use Node.js 24, pnpm 10.32.1 e Docker com Compose v2. Na raiz do clone, crie `.env` a partir de `.env.example` (`cp .env.example .env` no Bash ou `Copy-Item .env.example .env` no PowerShell). Gere um segredo diferente para cada ambiente com o comando abaixo e copie a saída para `AUTH_JWT_SECRET` no seu `.env`. Ele deve conter 64 caracteres hexadecimais. Se você já usa a API, adicione essa variável ao seu `.env` existente.
-
-```sh
-node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
-```
-
-Depois execute:
+Use Node.js 24, pnpm 10.32.1 e Docker com Compose v2. Na raiz do clone, execute:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm env:setup
 docker compose up -d --wait db
 pnpm prisma:generate
 pnpm prisma:deploy
 pnpm start:dev
 ```
+
+O comando `pnpm env:setup` cria o `.env` local ou completa as variáveis ausentes usando `.env.example`. Na primeira execução, substitui `AUTH_JWT_SECRET` vazio ou de exemplo por um segredo aleatório de 64 caracteres hexadecimais. As próximas execuções preservam sua chave. `pnpm start:dev` e `pnpm start:debug` executam essa preparação automaticamente.
+
+Para produção, configure um segredo próprio no ambiente de deploy. Você pode gerar a chave com `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
 
 O Compose expõe o PostgreSQL de desenvolvimento em `127.0.0.1:5432` e mantém os dados em um volume. A API lê `DATABASE_URL` e `PORT` na inicialização. A porta padrão da API é 3000.
 
