@@ -15,6 +15,7 @@ it('keeps execution attached to the original meal plan after publication of a re
       .expect(201);
     const plan = z.object({ id: z.uuid() }).parse(create.body);
     const url = path + '/plans/' + plan.id;
+    await f.api.get(url).auth(client.token, { type: 'bearer' }).expect(404);
     await f.api
       .get(path + '/plans')
       .auth(client.token, { type: 'bearer' })
@@ -23,6 +24,12 @@ it('keeps execution attached to the original meal plan after publication of a re
       .put(url + '/publication')
       .auth(pro.token, { type: 'bearer' })
       .expect(200);
+    await f.api
+      .get(url)
+      .auth(client.token, { type: 'bearer' })
+      .expect(200)
+      .expect((r) => expect(r.body).toMatchObject({ id: plan.id }));
+    await f.api.get(url).auth(third.token, { type: 'bearer' }).expect(404);
     const day = new Date().toISOString().slice(0, 10);
     await f.api
       .put(url + '/logs')

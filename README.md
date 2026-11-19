@@ -40,7 +40,7 @@ Com a API aberta, execute `docker compose stop db` em outro terminal. A readines
 
 ### Identidade no Postman
 
-Use `http://localhost:3000` como URL base e selecione **Body → raw → JSON** nas requisições POST. Cada conta pode atuar como cliente e, futuramente, ter um perfil profissional.
+Use `http://localhost:3000` como URL base e selecione **Body → raw → JSON** nas requisições POST. Cada conta pode contratar como cliente e também publicar um perfil profissional.
 
 1. Envie `POST /auth/register` com o corpo abaixo. A API remove espaços nas extremidades do nome e do e-mail e converte o e-mail para minúsculas. A senha aceita de 12 a 128 caracteres e preserva espaços. A resposta `201` contém `id`, `name` e `email`. Um e-mail já cadastrado retorna `409`.
 
@@ -92,6 +92,8 @@ Também é possível usar `git commit -m "chore: configure development environme
 O Husky executa as verificações de tipos, lint e formatação antes de cada commit.
 O commitlint valida o padrão Conventional Commits e limita o cabeçalho a 100 caracteres.
 
+## Fluxos de acompanhamento
+
 ### Perfis e ofertas no Postman
 
 Com o token do profissional, envie `PUT /professionals/me` com `{"displayName":"Ana","slug":"ana-nutri","biography":"Consultoria online","specialties":["Esporte"],"modalities":["NUTRITION"],"formats":["ONLINE"]}`. Um atendimento `IN_PERSON` requer cidade e UF na publicação. A foto aceita uma URL HTTPS. O rascunho pode ser parcial e permanece privado até `PUT /professionals/me/publication`.
@@ -126,6 +128,8 @@ Com o token do cliente, envie `PUT /contracts/{id}/check-ins` com `{"weekStart":
 
 Consulte `GET /contracts/{id}/timeline?from=2026-11-16&to=2026-11-22` para os eventos e `GET /contracts/{id}/evolution` com o mesmo período para os registros. Dias sem registro não contam como refeição ou exercício pulado.
 
+Os links da timeline e do painel abrem o registro específico do vínculo. Use o mesmo Bearer ao seguir um link de avaliação, exame, plano ou check-in no Postman.
+
 ### Conversa e notificações no Postman
 
 Como cliente, use `POST /contracts/{id}/messages` com `{"requestKey":"<UUID>","body":"Consegui fazer o treino de hoje."}`. Mantenha o mesmo UUID ao reenviar. Com o token profissional, consulte `GET /contracts/{id}/messages?limit=20`. O retorno inclui as mensagens mais recentes, o total não lido e o cursor para a próxima página em `?before={next}`. Marque a leitura com `PUT /contracts/{id}/messages/{messageId}/read`. Cada conta consulta sua caixa em `GET /notifications` e confirma a leitura com `PUT /notifications/{notificationId}/read`. A caixa também recebe publicações de planos e respostas aos check-ins.
@@ -136,6 +140,8 @@ Como cliente, use `POST /contracts/{id}/messages` com `{"requestKey":"<UUID>","b
 2. Como profissional, use `POST /professionals/me/availability` com `{"startsAt":"2026-12-01T09:00:00-03:00","endsAt":"2026-12-01T09:45:00-03:00","timeZone":"America/Sao_Paulo","format":"ONLINE"}`. Troque a data por um horário futuro. A API retorna o instante em UTC e o fuso IANA para exibição.
 3. Como cliente, abra `GET /contracts/{id}/availability` e envie `POST /contracts/{id}/appointments` com `{"slotId":"<UUID>","requestKey":"<UUID>"}`. Os dois participantes podem consultar `GET /contracts/{id}/appointments` e `GET /notifications`. Para reagendar, envie `PUT .../appointments/{appointmentId}/schedule` com `slotId` e `expectedRevision`. Para cancelar, use `PUT .../appointments/{appointmentId}/cancellation`.
 4. Entre 15 minutos antes do início e o fim da consulta, cada participante usa seu próprio Bearer em `POST .../appointments/{appointmentId}/room`. Passe o `url` e o `token` recebidos ao cliente LiveKit (`room.connect(url, token)`). Os dois tokens autorizam a mesma sala privada e identificam pessoas diferentes. O token de entrada vale até dois minutos. Para validar o servidor pelo Postman, use `GET http://127.0.0.1:7880/rtc/validate` com o token **da sala** em Bearer.
+
+Para executar o teste de agenda contra o seu LiveKit local, prepare o `.env`, suba `livekit` e `db-test` no Compose, defina `TEST_LIVEKIT_SERVER=true` no terminal e execute `pnpm test:e2e test/agenda.e2e-spec.ts`. O teste envia os dois tokens ao servidor local para validar a entrada. A suíte padrão valida as assinaturas e permissões com o SDK oficial.
 
 ### Webhooks do Stripe em sandbox
 

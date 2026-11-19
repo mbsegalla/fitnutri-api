@@ -12,24 +12,30 @@ const progress = {
   exercises: { orderBy: { exerciseIndex: 'asc' } },
   sets: { orderBy: [{ exerciseIndex: 'asc' }, { setIndex: 'asc' }] },
 } satisfies Prisma.WorkoutSessionInclude;
+
 @Injectable()
 export class TrainingService {
   constructor(
     @Inject(CoachingService) private readonly coaching: CoachingService,
     @Inject(PlanVersionsService) private readonly versions: PlanVersionsService,
   ) {}
+
   create(actor: string, id: string, input: z.infer<typeof planInput>) {
     return this.versions.create(actor, id, 'PERSONAL_TRAINING', input);
   }
+
   update(actor: string, id: string, planId: string, input: z.infer<typeof planInput>) {
     return this.versions.update(actor, id, 'PERSONAL_TRAINING', planId, input);
   }
+
   publish(actor: string, id: string, planId: string) {
     return this.versions.publish(actor, id, 'PERSONAL_TRAINING', planId);
   }
+
   copy(actor: string, id: string, planId: string) {
     return this.versions.copy(actor, id, 'PERSONAL_TRAINING', planId);
   }
+
   history(actor: string, id: string) {
     return this.versions.history(actor, id, 'PERSONAL_TRAINING');
   }
@@ -51,6 +57,7 @@ export class TrainingService {
           }
         }
       }
+
       return [...exercises.values()];
     });
   }
@@ -71,6 +78,7 @@ export class TrainingService {
         where: { day, plan: { contractId: id } },
         include: progress,
       });
+
       return { plan, workoutIndices, sessions };
     });
   }
@@ -85,26 +93,33 @@ export class TrainingService {
         const plan = await tx.planVersion.findFirst({
           where: { id: planId, contractId: id, publishedAt: { not: null } },
         });
+
         if (!plan) {
           throw new NotFoundException('Published plan not found');
         }
+
         const existing = await tx.workoutSession.findUnique({
           where: { planId_day_workoutIndex: key },
           include: progress,
         });
+
         if (existing) {
           return existing;
         }
+
         if (day !== new Date().toISOString().slice(0, 10) || !planInput.parse(plan.content).workouts[workoutIndex]) {
           throw new BadRequestException('Invalid workout or session day');
         }
+
         const latest = await tx.planVersion.findFirst({
           where: { contractId: id, publishedAt: { not: null } },
           orderBy: [{ publishedAt: 'desc' }, { version: 'desc' }],
         });
+
         if (latest?.id !== planId) {
           throw new ConflictException('This version has been superseded');
         }
+
         return tx.workoutSession.create({ data: key, include: progress });
       },
     );
@@ -115,9 +130,11 @@ export class TrainingService {
       where: { id: sessionId, plan: { contractId: id } },
       include: { plan: true },
     });
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
+
     return session;
   }
 
@@ -128,25 +145,32 @@ export class TrainingService {
       { role: 'client', active: true, modality: 'PERSONAL_TRAINING' },
       async (tx) => {
         const session = await this.load(tx, id, sessionId);
+
         if (session.finishedAt) {
           throw new ConflictException('Session complete');
         }
+
         const { exerciseIndex, skipped, note } = input;
+
         if (!planInput.parse(session.plan.content).workouts[session.workoutIndex].exercises[exerciseIndex]) {
           throw new BadRequestException('Unknown exercise');
         }
+
         if (skipped && (await tx.setExecution.count({ where: { sessionId, exerciseIndex } }))) {
           throw new ConflictException('An exercise with recorded sets cannot be skipped');
         }
+
         await tx.exerciseExecution.upsert({
           where: { sessionId_exerciseIndex: { sessionId, exerciseIndex } },
           create: { sessionId, ...input },
           update: { skipped, note: note ?? null },
         });
+
         return tx.workoutSession.findUniqueOrThrow({ where: { id: sessionId }, include: progress });
       },
     );
   }
+
   record(actor: string, id: string, sessionId: string, input: z.infer<typeof setInput>) {
     return this.coaching.withAccess(
       actor,
@@ -154,11 +178,14 @@ export class TrainingService {
       { role: 'client', active: true, modality: 'PERSONAL_TRAINING' },
       async (tx) => {
         const session = await this.load(tx, id, sessionId);
+
         if (session.finishedAt) {
           throw new ConflictException('Session complete');
         }
+
         const { exerciseIndex, setIndex, reps, seconds, loadKg } = input;
         const ex = planInput.parse(session.plan.content).workouts[session.workoutIndex].exercises[exerciseIndex];
+
         if (
           !ex ||
           setIndex >= ex.sets ||
@@ -166,21 +193,26 @@ export class TrainingService {
         ) {
           throw new BadRequestException('Set does not match the prescription');
         }
+
         const exercise = await tx.exerciseExecution.findUnique({
           where: { sessionId_exerciseIndex: { sessionId, exerciseIndex } },
         });
+
         if (exercise?.skipped) {
           throw new ConflictException('Exercise marked skipped');
         }
+
         await tx.setExecution.upsert({
           where: { sessionId_exerciseIndex_setIndex: { sessionId, exerciseIndex, setIndex } },
           create: { sessionId, ...input },
           update: { reps: reps ?? null, seconds: seconds ?? null, loadKg: loadKg ?? null },
         });
+
         return tx.workoutSession.findUniqueOrThrow({ where: { id: sessionId }, include: progress });
       },
     );
   }
+
   finish(actor: string, id: string, sessionId: string) {
     return this.coaching.withAccess(
       actor,
@@ -188,6 +220,7 @@ export class TrainingService {
       { role: 'client', active: true, modality: 'PERSONAL_TRAINING' },
       async (tx) => {
         const session = await this.load(tx, id, sessionId);
+
         return tx.workoutSession.update({
           where: { id: sessionId },
           data: { finishedAt: session.finishedAt ?? new Date() },
@@ -196,6 +229,7 @@ export class TrainingService {
       },
     );
   }
+
   sessions(actor: string, id: string, { from, to, exerciseKey }: z.infer<typeof period>) {
     return this.coaching.withAccess(actor, id, { modality: 'PERSONAL_TRAINING' }, async (tx) => {
       const sessions = await tx.workoutSession.findMany({
@@ -203,11 +237,16 @@ export class TrainingService {
         include: { ...progress, plan: true },
         orderBy: [{ day: 'asc' }, { startedAt: 'asc' }],
       });
+
       return exerciseKey
         ? sessions.filter((s) =>
             planInput.parse(s.plan.content).workouts[s.workoutIndex].exercises.some((e) => e.key === exerciseKey),
           )
         : sessions;
     });
+  }
+
+  plan(actor: string, id: string, planId: string) {
+    return this.versions.get(actor, id, 'PERSONAL_TRAINING', planId);
   }
 }

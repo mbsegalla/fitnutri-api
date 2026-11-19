@@ -98,4 +98,16 @@ export class FollowUpController {
   dashboard(@CurrentAccount() accountId: string) {
     return this.service.dashboard(accountId);
   }
+
+  @Get('contracts/:id/check-ins/:checkId')
+  @ApiOperation({ summary: 'Read a specific check in this relationship' })
+  @Authenticated()
+  @ApiOkResponse({ standardSchema: checkView })
+  check(
+    @CurrentAccount() actor: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('checkId', new ParseUUIDPipe()) checkId: string,
+  ) {
+    return this.service.check(actor, id, checkId);
+  }
 }

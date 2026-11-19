@@ -191,4 +191,16 @@ export class TrainingController {
   ) {
     return this.service.sessions(accountId, id, query);
   }
+
+  @Get('plans/:planId')
+  @ApiOperation({ summary: 'Read a specific plan in this relationship' })
+  @Authenticated()
+  @ApiOkResponse({ standardSchema: versionView })
+  plan(
+    @CurrentAccount() actor: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('planId', new ParseUUIDPipe()) planId: string,
+  ) {
+    return this.service.plan(actor, id, planId);
+  }
 }

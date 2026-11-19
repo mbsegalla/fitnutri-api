@@ -36,11 +36,24 @@ it('turns a weekly check-in into an actionable item and publishes the reply to t
       .expect((r) =>
         expect(r.body).toEqual(
           expect.arrayContaining([
-            expect.objectContaining({ kind: 'CHECK_IN_PENDING', resourceId: check.id }),
+            expect.objectContaining({
+              kind: 'CHECK_IN_PENDING',
+              resourceId: check.id,
+              href: root + '/check-ins/' + check.id,
+            }),
             expect.objectContaining({ kind: 'PLAN_MISSING' }),
           ]),
         ),
       );
+    await f.api
+      .get(root + '/check-ins/' + check.id)
+      .auth(pro.token, { type: 'bearer' })
+      .expect(200)
+      .expect((r) => expect(r.body).toMatchObject({ id: check.id, difficulty: 'Travel' }));
+    await f.api
+      .get(root + '/check-ins/' + check.id)
+      .auth(stranger.token, { type: 'bearer' })
+      .expect(404);
     const url = root + '/check-ins/' + check.id + '/reply';
     await f.api.put(url).auth(stranger.token, { type: 'bearer' }).send({ reply: 'Try again' }).expect(404);
     await f.api.put(url).auth(pro.token, { type: 'bearer' }).send({ reply: 'Reviewed' }).expect(200);

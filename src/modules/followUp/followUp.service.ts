@@ -3,33 +3,39 @@ import type { z } from 'zod';
 
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import { CoachingService } from '../coaching/coaching.service.js';
+import { notify } from '../messaging/notify.js';
 
 import type { checkInput, period, replyInput } from './followUp.schemas.js';
 
 function range({ from, to }: z.infer<typeof period>) {
   return { gte: new Date(from + 'T00:00:00Z'), lte: new Date(to + 'T23:59:59.999Z') };
 }
+
 function item(contractId: string, resourceId: string, kind: string, path: string, at: Date) {
   return { contractId, resourceId, kind, href: '/contracts/' + contractId + path, at };
 }
-import { notify } from '../messaging/notify.js';
+
 @Injectable()
 export class FollowUpService {
   constructor(
     @Inject(CoachingService) private readonly coaching: CoachingService,
     @Inject(PrismaService) private readonly db: PrismaService,
   ) {}
+
   submit(actor: string, id: string, input: z.infer<typeof checkInput>) {
     return this.coaching.withAccess(actor, id, { role: 'client', active: true }, async (tx) => {
       if (input.weekStart > new Date().toISOString().slice(0, 10)) {
         throw new BadRequestException('Future check-in');
       }
+
       const prior = await tx.checkIn.findUnique({
         where: { contractId_weekStart: { contractId: id, weekStart: input.weekStart } },
       });
+
       if (prior?.repliedAt) {
         throw new ConflictException('A reviewed check-in is final');
       }
+
       return tx.checkIn.upsert({
         where: { contractId_weekStart: { contractId: id, weekStart: input.weekStart } },
         create: { contractId: id, ...input },
@@ -37,24 +43,31 @@ export class FollowUpService {
       });
     });
   }
+
   checks(actor: string, id: string) {
     return this.coaching.withAccess(actor, id, {}, (tx) =>
       tx.checkIn.findMany({ where: { contractId: id }, orderBy: { weekStart: 'desc' } }),
     );
   }
+
   reply(actor: string, id: string, checkId: string, { reply }: z.infer<typeof replyInput>) {
     return this.coaching.withAccess(actor, id, { role: 'professional', active: true }, async (tx, c) => {
       const prior = await tx.checkIn.findFirst({ where: { id: checkId, contractId: id } });
+
       if (!prior) {
         throw new NotFoundException('Check-in not found');
       }
+
       if (prior.reply === reply) {
         return prior;
       }
-      await notify(tx, c.clientId, 'CHECK_IN_REPLY', 'check:' + checkId, '/contracts/' + id + '/check-ins');
+
+      await notify(tx, c.clientId, 'CHECK_IN_REPLY', 'check:' + checkId, '/contracts/' + id + '/check-ins/' + checkId);
+
       return tx.checkIn.update({ where: { id: checkId }, data: { reply, repliedAt: new Date() } });
     });
   }
+
   progress(actor: string, id: string, p: z.infer<typeof period>) {
     return this.coaching.withAccess(actor, id, {}, async (tx) => {
       const day = { gte: p.from, lte: p.to };
@@ -75,9 +88,11 @@ export class FollowUpService {
         where: { contractId: id, weekStart: day },
         orderBy: { weekStart: 'asc' },
       });
+
       return { meals, sessions, assessments, checkIns };
     });
   }
+
   timeline(actor: string, id: string, p: z.infer<typeof period>) {
     return this.coaching.withAccess(actor, id, {}, async (tx, c) => {
       const between = range(p);
@@ -97,27 +112,29 @@ export class FollowUpService {
         select: { id: true, assessedAt: true },
       });
       const section = c.modality === 'NUTRITION' ? 'nutrition' : 'training';
+
       return [
         item(id, id, 'REQUESTED', '', c.createdAt),
         ...(c.startedAt ? [item(id, id, 'STARTED', '', c.startedAt)] : []),
         ...(c.endedAt ? [item(id, id, 'ENDED', '', c.endedAt)] : []),
         ...plans.flatMap((v) =>
-          v.publishedAt ? [item(id, v.id, 'PLAN_PUBLISHED', '/' + section + '/plans', v.publishedAt)] : [],
+          v.publishedAt ? [item(id, v.id, 'PLAN_PUBLISHED', '/' + section + '/plans/' + v.id, v.publishedAt)] : [],
         ),
-        ...assessments.map((a) => item(id, a.id, 'ASSESSMENT', '/assessments', a.assessedAt)),
+        ...assessments.map((a) => item(id, a.id, 'ASSESSMENT', '/assessments/' + a.id, a.assessedAt)),
         ...documents.flatMap((d) => [
-          item(id, d.id, 'DOCUMENT', '/documents', d.createdAt),
-          ...(d.publishedAt ? [item(id, d.id, 'FEEDBACK', '/documents', d.publishedAt)] : []),
+          item(id, d.id, 'DOCUMENT', '/documents/' + d.id, d.createdAt),
+          ...(d.publishedAt ? [item(id, d.id, 'FEEDBACK', '/documents/' + d.id, d.publishedAt)] : []),
         ]),
         ...checkIns.flatMap((x) => [
-          item(id, x.id, 'CHECK_IN', '/check-ins', x.createdAt),
-          ...(x.repliedAt ? [item(id, x.id, 'REPLY', '/check-ins', x.repliedAt)] : []),
+          item(id, x.id, 'CHECK_IN', '/check-ins/' + x.id, x.createdAt),
+          ...(x.repliedAt ? [item(id, x.id, 'REPLY', '/check-ins/' + x.id, x.repliedAt)] : []),
         ]),
       ]
         .filter((e) => e.at >= between.gte && e.at <= between.lte)
         .sort((a, b) => b.at.getTime() - a.at.getTime() || a.resourceId.localeCompare(b.resourceId));
     });
   }
+
   async dashboard(professionalId: string) {
     const active = { professionalId, active: true };
     const [requests, documents, checks, plans] = await this.db.$transaction([
@@ -132,10 +149,11 @@ export class FollowUpService {
       }),
       this.db.contract.findMany({ where: { ...active, plans: { none: { publishedAt: { not: null } } } } }),
     ]);
+
     return [
       ...requests.map((c) => item(c.id, c.id, 'REQUEST_PENDING', '', c.createdAt)),
       ...documents.map((d) => item(d.contractId, d.id, 'EXAM_PENDING', '/documents/' + d.id + '/file', d.createdAt)),
-      ...checks.map((c) => item(c.contractId, c.id, 'CHECK_IN_PENDING', '/check-ins', c.createdAt)),
+      ...checks.map((c) => item(c.contractId, c.id, 'CHECK_IN_PENDING', '/check-ins/' + c.id, c.createdAt)),
       ...plans.map((c) =>
         item(
           c.id,
@@ -146,5 +164,17 @@ export class FollowUpService {
         ),
       ),
     ].sort((a, b) => a.at.getTime() - b.at.getTime());
+  }
+
+  check(actor: string, id: string, checkId: string) {
+    return this.coaching.withAccess(actor, id, {}, async (tx) => {
+      const record = await tx.checkIn.findFirst({ where: { id: checkId, contractId: id } });
+
+      if (!record) {
+        throw new NotFoundException('Record not found');
+      }
+
+      return record;
+    });
   }
 }

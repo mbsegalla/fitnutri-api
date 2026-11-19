@@ -146,6 +146,7 @@ export class AssessmentsController {
     if (!file) {
       throw new BadRequestException('File required');
     }
+
     return this.service.upload(accountId, id, kind, file);
   }
 
@@ -161,6 +162,31 @@ export class AssessmentsController {
     @Param('documentId', new ParseUUIDPipe()) documentId: string,
   ) {
     const file = await this.service.download(accountId, id, documentId);
+
     return new StreamableFile(Buffer.from(file.content), { type: file.contentType, disposition: 'attachment' });
+  }
+
+  @Get('documents/:documentId')
+  @ApiOperation({ summary: 'Read a specific document in this relationship' })
+  @Authenticated()
+  @ApiOkResponse({ standardSchema: documentView })
+  document(
+    @CurrentAccount() actor: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('documentId', new ParseUUIDPipe()) documentId: string,
+  ) {
+    return this.service.document(actor, id, documentId);
+  }
+
+  @Get('assessments/:assessmentId')
+  @ApiOperation({ summary: 'Read a specific assessment in this relationship' })
+  @Authenticated()
+  @ApiOkResponse({ standardSchema: assessmentView })
+  assessment(
+    @CurrentAccount() actor: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('assessmentId', new ParseUUIDPipe()) assessmentId: string,
+  ) {
+    return this.service.assessment(actor, id, assessmentId);
   }
 }
