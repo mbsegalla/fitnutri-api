@@ -119,3 +119,9 @@ Para revisar, o profissional usa `POST .../plans/{planId}/copies`, edita a cópi
 No vínculo de treino, use `POST /contracts/{id}/training/plans` como personal, com `{"title":"Semana A","workouts":[{"name":"Segunda","weekdays":[1],"exercises":[{"key":"agachamento","name":"Agachamento","mode":"REPS","sets":3,"reps":10,"restSeconds":60}]}]}`. Para tempo, informe `mode=TIME` e `seconds`. `GET .../training/exercises` devolve exercícios reutilizáveis do profissional. Publique em `PUT .../plans/{planId}/publication`.
 
 Como cliente, consulte `GET .../training/day?day=AAAA-MM-DD`, inicie ou retome com `POST .../plans/{planId}/sessions` (`day` UTC de hoje e `workoutIndex:0`). Em `PUT .../training/sessions/{sessionId}/sets` envie `{"exerciseIndex":0,"setIndex":0,"reps":10,"loadKg":20}` e varie os índices e valores. O mesmo índice atualiza a série. Use `PUT .../sessions/{sessionId}/exercises` para observação ou exercício pulado, e `PUT .../sessions/{sessionId}/completion` para concluir. O personal compara execução e prescrição em `GET .../training/sessions?from=AAAA-MM-DD&to=AAAA-MM-DD&exerciseKey=agachamento`.
+
+### Check-in, evolução e painel no Postman
+
+Com o token do cliente, envie `PUT /contracts/{id}/check-ins` com `{"weekStart":"2026-11-16","adherence":3,"difficulty":"Viagem"}`. Use a segunda-feira da semana desejada e adesão de 1 a 5. Com o token profissional, abra `GET /professionals/me/dashboard`, siga o campo `href` do item e envie `PUT /contracts/{id}/check-ins/{checkId}/reply` com `{"reply":"Vamos ajustar o almoço nos dias de viagem."}`. Atualize o painel e consulte `GET /contracts/{id}/check-ins` como cliente.
+
+Consulte `GET /contracts/{id}/timeline?from=2026-11-16&to=2026-11-22` para os eventos e `GET /contracts/{id}/evolution` com o mesmo período para os registros. Dias sem registro não contam como refeição ou exercício pulado.
