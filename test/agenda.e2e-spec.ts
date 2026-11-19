@@ -71,7 +71,10 @@ it('serializes competing bookings and grants private online room access to the t
       .post(path + '/room')
       .auth(clients[1 - i].token, { type: 'bearer' })
       .expect(404);
-    const verifier = new TokenVerifier('integration-test', 'cd'.repeat(32));
+    const verifier = new TokenVerifier(
+      z.string().parse(process.env.LIVEKIT_API_KEY),
+      z.string().parse(process.env.LIVEKIT_API_SECRET),
+    );
     for (const participant of [clients[i], pro]) {
       const { token, url } = z.object({ token: z.string(), url: z.url() }).parse(
         (
