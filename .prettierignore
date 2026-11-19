@@ -3,3 +3,4 @@ build/
 coverage/
 .husky/_/
 pnpm-lock.yaml
+src/generated/prisma/
