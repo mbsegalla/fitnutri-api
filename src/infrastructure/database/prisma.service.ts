@@ -13,6 +13,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnAppli
       connectionString: config.get('DATABASE_URL', { infer: true }),
       connectionTimeoutMillis: 3000,
     });
+
     super({ adapter });
   }
 

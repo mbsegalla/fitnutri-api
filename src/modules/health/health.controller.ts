@@ -18,6 +18,7 @@ export class HealthController {
     } catch {
       throw new ServiceUnavailableException('Database unavailable');
     }
+
     return { status: 'ready' };
   }
 }

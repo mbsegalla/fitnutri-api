@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## TypeScript spacing
+
+Group related statements and use one blank line when the next statement starts a new step. Keep related declarations together, then leave a blank line before an `if`, `try`, or function declaration. In bootstrap code, separate application creation, lifecycle setup, configuration, and listening. Leave a blank line between the bootstrap function and its invocation.
+
 ## NestJS
 
 This app's version of NestJS is likely newer than what you know. https://docs.nestjs.com/llms.txt indexes its documentation, with a markdown page per chapter.
