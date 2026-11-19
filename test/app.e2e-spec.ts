@@ -1,29 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types.js';
-import { AppModule } from './../src/app.module.js';
+import type { App } from 'supertest/types.js';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+import { AppModule } from '../src/app.module.js';
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
-
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
-  });
-
-  afterEach(async () => {
-    await app.close();
+describe('Fit Nutri API (e2e)', () => {
+  it('starts the HTTP application and returns 404 for an unknown route', async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const app = moduleRef.createNestApplication<INestApplication<App>>();
+    try {
+      await app.init();
+      await request(app.getHttpServer()).get('/unknown-route').expect(404);
+    } finally {
+      await app.close();
+    }
   });
 });
