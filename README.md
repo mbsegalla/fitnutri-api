@@ -91,3 +91,9 @@ Também é possível usar `git commit -m "chore: configure development environme
 
 O Husky executa as verificações de tipos, lint e formatação antes de cada commit.
 O commitlint valida o padrão Conventional Commits e limita o cabeçalho a 100 caracteres.
+
+### Perfis e ofertas no Postman
+
+Com o token do profissional, envie `PUT /professionals/me` com `{"displayName":"Ana","slug":"ana-nutri","biography":"Consultoria online","specialties":["Esporte"],"modalities":["NUTRITION"],"formats":["ONLINE"]}`. Um atendimento `IN_PERSON` requer cidade e UF na publicação. A foto aceita uma URL HTTPS. O rascunho pode ser parcial e permanece privado até `PUT /professionals/me/publication`.
+
+Cadastre uma oferta com `POST /professionals/me/offers` e `{"title":"Mensal","description":"Plano individual","modality":"NUTRITION","priceMinor":15000,"currency":"BRL","durationDays":30,"included":["Consulta"]}`. O preço está em unidades mínimas da moeda. Como visitante, use `GET /professionals?q=Ana&format=ONLINE&page=1&limit=20` e `GET /professionals/ana-nutri` para consultar o perfil e obter o ID da oferta. `PUT /professionals/me/unpublish` retira o perfil da busca e do detalhe público.

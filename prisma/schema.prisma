@@ -10,8 +10,51 @@ datasource db {
 }
 
 model Account {
-  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String @db.VarChar(120)
-  email        String @unique @db.VarChar(254)
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String               @db.VarChar(120)
+  email        String               @unique @db.VarChar(254)
+  profile      ProfessionalProfile?
   passwordHash String
+}
+
+enum Modality {
+  NUTRITION
+  PERSONAL_TRAINING
+}
+
+enum CareFormat {
+  ONLINE
+  IN_PERSON
+}
+
+model ProfessionalProfile {
+  accountId   String       @id @db.Uuid
+  account     Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  draft       Json
+  published   Boolean      @default(false)
+  slug        String?      @unique
+  displayName String?
+  biography   String?
+  photoUrl    String?
+  specialties String[]
+  modalities  Modality[]
+  formats     CareFormat[]
+  city        String?
+  state       String?
+  offers      Offer[]
+}
+
+model Offer {
+  id             String              @id @default(uuid()) @db.Uuid
+  professionalId String              @db.Uuid
+  profile        ProfessionalProfile @relation(fields: [professionalId], references: [accountId], onDelete: Cascade)
+  title          String
+  description    String
+  modality       Modality
+  priceMinor     Int
+  currency       String              @db.Char(3)
+  durationDays   Int
+  included       String[]
+
+  @@index([professionalId])
 }

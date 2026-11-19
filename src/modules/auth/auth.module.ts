@@ -10,6 +10,7 @@ import { AuthController } from './presentation/auth.controller.js';
 
 @Module({
   imports: [DatabaseModule],
+  exports: [AccessTokenService, AccessTokenGuard],
   controllers: [AuthController],
   providers: [AccountRepository, AccessTokenService, AuthService, AccessTokenGuard],
 })
