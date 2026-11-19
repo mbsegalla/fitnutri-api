@@ -10,11 +10,13 @@ datasource db {
 }
 
 model Account {
-  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String               @db.VarChar(120)
-  email        String               @unique @db.VarChar(254)
-  profile      ProfessionalProfile?
-  passwordHash String
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String               @db.VarChar(120)
+  email             String               @unique @db.VarChar(254)
+  profile           ProfessionalProfile?
+  clientContracts   Contract[]           @relation("Client")
+  providerContracts Contract[]           @relation("Provider")
+  passwordHash      String
 }
 
 enum Modality {
@@ -45,6 +47,7 @@ model ProfessionalProfile {
 }
 
 model Offer {
+  contracts      Contract[]
   id             String              @id @default(uuid()) @db.Uuid
   professionalId String              @db.Uuid
   profile        ProfessionalProfile @relation(fields: [professionalId], references: [accountId], onDelete: Cascade)
@@ -57,4 +60,40 @@ model Offer {
   included       String[]
 
   @@index([professionalId])
+}
+
+enum ContractStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  CANCELED
+  ENDED
+}
+
+enum PaymentState {
+  FREE
+  UNPAID
+  PAID
+}
+
+model Contract {
+  id             String         @id @default(uuid()) @db.Uuid
+  clientId       String         @db.Uuid
+  client         Account        @relation("Client", fields: [clientId], references: [id], onDelete: Cascade)
+  professionalId String         @db.Uuid
+  professional   Account        @relation("Provider", fields: [professionalId], references: [id], onDelete: Cascade)
+  offerId        String         @db.Uuid
+  offer          Offer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  requestKey     String         @db.Uuid
+  modality       Modality
+  terms          Json
+  status         ContractStatus @default(REQUESTED)
+  payment        PaymentState
+  active         Boolean        @default(false)
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@unique([clientId, requestKey])
+  @@index([professionalId, status])
 }

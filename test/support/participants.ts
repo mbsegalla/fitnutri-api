@@ -57,6 +57,22 @@ export async function createFixture() {
 
     return { ...owner, slug, profile, offer, offerId: z.object({ id: z.uuid() }).parse(result.body).id };
   }
+  async function relationship(modality: 'NUTRITION' | 'PERSONAL_TRAINING' = 'NUTRITION') {
+    const pro = await professional(modality);
+    const client = await user();
+    const response = await api
+      .post('/contracts')
+      .auth(client.token, { type: 'bearer' })
+      .send({ offerId: pro.offerId, requestKey: randomUUID() })
+      .expect(201);
+    const id = z.object({ id: z.uuid() }).parse(response.body).id;
+    await api
+      .patch('/contracts/' + id)
+      .auth(pro.token, { type: 'bearer' })
+      .send({ action: 'ACCEPT' })
+      .expect(200);
+    return { pro, client, id };
+  }
   async function close() {
     try {
       await db.account.deleteMany({ where: { id: { in: accounts } } });
@@ -64,5 +80,5 @@ export async function createFixture() {
       await app.close();
     }
   }
-  return { api, user, professional, close };
+  return { api, user, professional, relationship, close };
 }

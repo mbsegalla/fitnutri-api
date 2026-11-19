@@ -97,3 +97,7 @@ O commitlint valida o padrão Conventional Commits e limita o cabeçalho a 100 c
 Com o token do profissional, envie `PUT /professionals/me` com `{"displayName":"Ana","slug":"ana-nutri","biography":"Consultoria online","specialties":["Esporte"],"modalities":["NUTRITION"],"formats":["ONLINE"]}`. Um atendimento `IN_PERSON` requer cidade e UF na publicação. A foto aceita uma URL HTTPS. O rascunho pode ser parcial e permanece privado até `PUT /professionals/me/publication`.
 
 Cadastre uma oferta com `POST /professionals/me/offers` e `{"title":"Mensal","description":"Plano individual","modality":"NUTRITION","priceMinor":15000,"currency":"BRL","durationDays":30,"included":["Consulta"]}`. O preço está em unidades mínimas da moeda. Como visitante, use `GET /professionals?q=Ana&format=ONLINE&page=1&limit=20` e `GET /professionals/ana-nutri` para consultar o perfil e obter o ID da oferta. `PUT /professionals/me/unpublish` retira o perfil da busca e do detalhe público.
+
+### Contratação e vínculo no Postman
+
+Como cliente, envie `POST /contracts` com `offerId` e `requestKey` (UUID novo para cada contratação, reutilizado em retries). Com o token do profissional, consulte `GET /contracts` e envie `PATCH /contracts/{id}` com `{"action":"ACCEPT"}` ou `DECLINE`. O cliente pode usar `CANCEL` enquanto pendente. Após o aceite, ambos podem usar `END`. A oferta gratuita é ativada no aceite. Uma oferta paga aceita permanece inativa até confirmação financeira. Consulte o vínculo e as condições originais em `GET /contracts/{id}`.
