@@ -7,9 +7,11 @@ import { CoachingModule } from './modules/coaching/coaching.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { NutritionModule } from './modules/nutrition/nutrition.module.js';
 import { ProfilesModule } from './modules/profiles/profiles.module.js';
+import { TrainingModule } from './modules/training/training.module.js';
 
 @Module({
   imports: [
+    TrainingModule,
     NutritionModule,
     AssessmentsModule,
     CoachingModule,

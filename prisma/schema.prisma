@@ -140,13 +140,14 @@ model CareDocument {
 }
 
 model PlanVersion {
-  id          String    @id @default(uuid()) @db.Uuid
-  contractId  String    @db.Uuid
-  contract    Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  sessions    WorkoutSession[]
+  id          String           @id @default(uuid()) @db.Uuid
+  contractId  String           @db.Uuid
+  contract    Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
   version     Int
   content     Json
   publishedAt DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime         @default(now())
   meals       MealLog[]
 
   @@unique([contractId, version])
@@ -163,4 +164,40 @@ model MealLog {
   comment   String?
 
   @@unique([planId, day, mealIndex])
+}
+
+model WorkoutSession {
+  id           String              @id @default(uuid()) @db.Uuid
+  planId       String              @db.Uuid
+  plan         PlanVersion         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  day          String              @db.Char(10)
+  workoutIndex Int
+  startedAt    DateTime            @default(now())
+  finishedAt   DateTime?
+  exercises    ExerciseExecution[]
+  sets         SetExecution[]
+
+  @@unique([planId, day, workoutIndex])
+}
+
+model ExerciseExecution {
+  sessionId     String         @db.Uuid
+  session       WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseIndex Int
+  skipped       Boolean
+  note          String?
+
+  @@id([sessionId, exerciseIndex])
+}
+
+model SetExecution {
+  sessionId     String         @db.Uuid
+  session       WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseIndex Int
+  setIndex      Int
+  reps          Int?
+  seconds       Int?
+  loadKg        Float?
+
+  @@id([sessionId, exerciseIndex, setIndex])
 }
