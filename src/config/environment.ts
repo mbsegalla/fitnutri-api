@@ -1,5 +1,7 @@
 export interface Environment {
   DATABASE_URL: string;
+  AUTH_JWT_SECRET: string;
+  AUTH_ACCESS_TOKEN_TTL_SECONDS: number;
   PORT: number;
   SWAGGER_ENABLED: boolean;
 }
@@ -29,7 +31,21 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
     throw new Error('SWAGGER_ENABLED must be true or false');
   }
 
+  const secret = values.AUTH_JWT_SECRET;
+
+  if (typeof secret !== 'string' || !/^[a-f0-9]{64}$/i.test(secret)) {
+    throw new Error('AUTH_JWT_SECRET must contain 64 hexadecimal characters');
+  }
+
+  const ttl = values.AUTH_ACCESS_TOKEN_TTL_SECONDS ?? '900';
+
+  if (typeof ttl !== 'string' || !/^\d+$/.test(ttl) || Number(ttl) < 1 || Number(ttl) > 86400) {
+    throw new Error('AUTH_ACCESS_TOKEN_TTL_SECONDS must be an integer between 1 and 86400');
+  }
+
   return {
+    AUTH_JWT_SECRET: secret,
+    AUTH_ACCESS_TOKEN_TTL_SECONDS: Number(ttl),
     DATABASE_URL: databaseUrl,
     PORT: Number(port),
     SWAGGER_ENABLED: swaggerEnabled === undefined ? values.NODE_ENV !== 'production' : swaggerEnabled === 'true',

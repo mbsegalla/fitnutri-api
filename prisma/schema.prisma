@@ -8,3 +8,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Account {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String @db.VarChar(120)
+  email        String @unique @db.VarChar(254)
+  passwordHash String
+}

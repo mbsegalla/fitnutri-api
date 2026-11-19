@@ -6,6 +6,8 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('Fit Nutri API')
     .setDescription('HTTP API for the Fit Nutri platform.')
     .setVersion('0.0.1')
+    .addBearerAuth()
+    .addTag('Auth', 'Account registration, sign-in and authenticated identity.')
     .addTag('Health', 'Application liveness and database readiness.')
     .build();
 

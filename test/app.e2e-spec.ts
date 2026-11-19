@@ -5,6 +5,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 
 import { AppModule } from '../src/app.module.js';
+import { validateEnvironment } from '../src/config/environment.js';
 import { setupSwagger } from '../src/infrastructure/http/swagger/swagger.setup.js';
 
 describe('Fit Nutri API (e2e)', () => {
@@ -12,7 +13,9 @@ describe('Fit Nutri API (e2e)', () => {
     const builder = Test.createTestingModule({ imports: [AppModule] });
 
     if (databaseUrl) {
-      builder.overrideProvider(ConfigService).useValue(new ConfigService({ DATABASE_URL: databaseUrl }));
+      builder
+        .overrideProvider(ConfigService)
+        .useValue(new ConfigService(validateEnvironment({ ...process.env, DATABASE_URL: databaseUrl })));
     }
 
     const moduleRef = await builder.compile();
