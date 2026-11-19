@@ -107,3 +107,9 @@ Como cliente, envie `POST /contracts` com `offerId` e `requestKey` (UUID novo pa
 Em um contrato gratuito aceito, use o token do cliente em `PUT /contracts/{id}/intake` com `{"goal":"Ganhar força","routine":"Expediente comercial"}`. Há campos específicos para hábitos alimentares ou experiência de treino. O profissional consulta e marca como revisada em `PUT /contracts/{id}/intake/review`, e registra medidas em `POST /contracts/{id}/assessments` com `assessedAt`, `notes` e `measures` (itens com `label`, `value` e `unit`).
 
 Como cliente, envie **form-data** em `POST /contracts/{id}/documents`, campos `kind=EXAM` e `file` do tipo File (PDF, JPEG ou PNG, até 5 MiB). Para foto, use `PROGRESS_PHOTO` e JPEG ou PNG. O binário fica no PostgreSQL privado. Como profissional, baixe em `GET /contracts/{id}/documents/{documentId}/file` e envie `PUT .../{documentId}/analysis` com `{"text":"Devolutiva do profissional","publish":true}`. O cliente consulta o texto publicado em `GET /contracts/{id}/documents`. Outro vínculo exige autorização independente.
+
+### Plano alimentar e execução no Postman
+
+No contrato de nutrição, o profissional envia `POST /contracts/{id}/nutrition/plans` com `{"title":"Semana 1","meals":[{"name":"Almoço","foods":[{"name":"Arroz","portion":"3 colheres","substitutions":["Batata"]}]}]}`. Publique com `PUT .../plans/{planId}/publication`. Como cliente, consulte `GET .../nutrition/day?day=AAAA-MM-DD` (dia UTC) e registre `PUT .../plans/{planId}/logs` com `{"day":"AAAA-MM-DD","mealIndex":0,"status":"ADAPTED","comment":"Usei a substituição"}`. Use a data real. A ausência de registro indica refeição ainda sem resposta.
+
+Para revisar, o profissional usa `POST .../plans/{planId}/copies`, edita a cópia com `PUT .../plans/{novoId}` e a publica. `GET .../nutrition/logs?from=AAAA-MM-DD&to=AAAA-MM-DD` mantém o ID da versão executada. O histórico publicado pode ser consultado depois do encerramento.

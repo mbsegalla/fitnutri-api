@@ -77,6 +77,7 @@ enum PaymentState {
 }
 
 model Contract {
+  plans          PlanVersion[]
   intake         Intake?
   assessments    Assessment[]
   documents      CareDocument[]
@@ -136,4 +137,30 @@ model CareDocument {
   publishedAt       DateTime?
 
   @@index([contractId, createdAt])
+}
+
+model PlanVersion {
+  id          String    @id @default(uuid()) @db.Uuid
+  contractId  String    @db.Uuid
+  contract    Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  version     Int
+  content     Json
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  meals       MealLog[]
+
+  @@unique([contractId, version])
+  @@index([contractId, publishedAt])
+}
+
+model MealLog {
+  id        String      @id @default(uuid()) @db.Uuid
+  planId    String      @db.Uuid
+  plan      PlanVersion @relation(fields: [planId], references: [id], onDelete: Cascade)
+  day       String      @db.Char(10)
+  mealIndex Int
+  status    String
+  comment   String?
+
+  @@unique([planId, day, mealIndex])
 }
