@@ -1,4 +1,5 @@
 export interface Environment {
+  STRIPE_TEST_WEBHOOK_SECRET?: string;
   LIVEKIT_URL?: string;
   LIVEKIT_API_KEY?: string;
   LIVEKIT_API_SECRET?: string;
@@ -46,6 +47,13 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
     throw new Error('AUTH_ACCESS_TOKEN_TTL_SECONDS must be an integer between 1 and 86400');
   }
 
+  const webhookSecret = values.STRIPE_TEST_WEBHOOK_SECRET || undefined;
+  if (
+    webhookSecret !== undefined &&
+    (typeof webhookSecret !== 'string' || !/^whsec_[A-Za-z0-9]{16,}$/.test(webhookSecret))
+  ) {
+    throw new Error('STRIPE_TEST_WEBHOOK_SECRET must be a Stripe endpoint signing secret');
+  }
   const videoUrl = values.LIVEKIT_URL || undefined;
   const videoKey = values.LIVEKIT_API_KEY || undefined;
   const videoSecret = values.LIVEKIT_API_SECRET || undefined;
@@ -73,6 +81,7 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
   }
 
   return {
+    STRIPE_TEST_WEBHOOK_SECRET: webhookSecret,
     LIVEKIT_URL: typeof videoUrl === 'string' ? videoUrl : undefined,
     LIVEKIT_API_KEY: typeof videoKey === 'string' ? videoKey : undefined,
     LIVEKIT_API_SECRET: typeof videoSecret === 'string' ? videoSecret : undefined,

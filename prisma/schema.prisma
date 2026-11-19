@@ -277,3 +277,14 @@ model Appointment {
   @@unique([contractId, requestKey])
   @@index([slotId, canceledAt])
 }
+
+model StripeEvent {
+  id              String   @id
+  type            String
+  objectId        String
+  providerAccount String?
+  occurredAt      DateTime @db.Timestamptz(3)
+  receivedAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([objectId, occurredAt])
+}
