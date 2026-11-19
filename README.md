@@ -125,3 +125,7 @@ Como cliente, consulte `GET .../training/day?day=AAAA-MM-DD`, inicie ou retome c
 Com o token do cliente, envie `PUT /contracts/{id}/check-ins` com `{"weekStart":"2026-11-16","adherence":3,"difficulty":"Viagem"}`. Use a segunda-feira da semana desejada e adesão de 1 a 5. Com o token profissional, abra `GET /professionals/me/dashboard`, siga o campo `href` do item e envie `PUT /contracts/{id}/check-ins/{checkId}/reply` com `{"reply":"Vamos ajustar o almoço nos dias de viagem."}`. Atualize o painel e consulte `GET /contracts/{id}/check-ins` como cliente.
 
 Consulte `GET /contracts/{id}/timeline?from=2026-11-16&to=2026-11-22` para os eventos e `GET /contracts/{id}/evolution` com o mesmo período para os registros. Dias sem registro não contam como refeição ou exercício pulado.
+
+### Conversa e notificações no Postman
+
+Como cliente, use `POST /contracts/{id}/messages` com `{"requestKey":"<UUID>","body":"Consegui fazer o treino de hoje."}`. Mantenha o mesmo UUID ao reenviar. Com o token profissional, consulte `GET /contracts/{id}/messages?limit=20`. O retorno inclui as mensagens mais recentes, o total não lido e o cursor para a próxima página em `?before={next}`. Marque a leitura com `PUT /contracts/{id}/messages/{messageId}/read`. Cada conta consulta sua caixa em `GET /notifications` e confirma a leitura com `PUT /notifications/{notificationId}/read`. A caixa também recebe publicações de planos e respostas aos check-ins.

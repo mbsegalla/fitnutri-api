@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, NotFoundException } from '@nestj
 
 import type { Modality, Prisma } from '../../generated/prisma/client.js';
 import { CoachingService } from '../coaching/coaching.service.js';
-
+import { notify } from '../messaging/notify.js';
 @Injectable()
 export class PlanVersionsService {
   constructor(@Inject(CoachingService) private readonly coaching: CoachingService) {}
@@ -38,7 +38,7 @@ export class PlanVersionsService {
     });
   }
   publish(actor: string, id: string, modality: Modality, planId: string) {
-    return this.coaching.withAccess(actor, id, { role: 'professional', modality, active: true }, async (tx) => {
+    return this.coaching.withAccess(actor, id, { role: 'professional', modality, active: true }, async (tx, c) => {
       const plan = await tx.planVersion.findFirst({ where: { id: planId, contractId: id } });
       if (!plan) {
         throw new NotFoundException('Plan not found');
@@ -46,6 +46,8 @@ export class PlanVersionsService {
       if (plan.publishedAt) {
         return plan;
       }
+      const section = modality === 'NUTRITION' ? 'nutrition' : 'training';
+      await notify(tx, c.clientId, 'PLAN_PUBLISHED', 'plan:' + planId, '/contracts/' + id + '/' + section + '/plans');
       return tx.planVersion.update({ where: { id: planId }, data: { publishedAt: new Date() } });
     });
   }

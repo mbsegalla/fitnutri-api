@@ -12,6 +12,7 @@ function range({ from, to }: z.infer<typeof period>) {
 function item(contractId: string, resourceId: string, kind: string, path: string, at: Date) {
   return { contractId, resourceId, kind, href: '/contracts/' + contractId + path, at };
 }
+import { notify } from '../messaging/notify.js';
 @Injectable()
 export class FollowUpService {
   constructor(
@@ -42,7 +43,7 @@ export class FollowUpService {
     );
   }
   reply(actor: string, id: string, checkId: string, { reply }: z.infer<typeof replyInput>) {
-    return this.coaching.withAccess(actor, id, { role: 'professional', active: true }, async (tx) => {
+    return this.coaching.withAccess(actor, id, { role: 'professional', active: true }, async (tx, c) => {
       const prior = await tx.checkIn.findFirst({ where: { id: checkId, contractId: id } });
       if (!prior) {
         throw new NotFoundException('Check-in not found');
@@ -50,6 +51,7 @@ export class FollowUpService {
       if (prior.reply === reply) {
         return prior;
       }
+      await notify(tx, c.clientId, 'CHECK_IN_REPLY', 'check:' + checkId, '/contracts/' + id + '/check-ins');
       return tx.checkIn.update({ where: { id: checkId }, data: { reply, repliedAt: new Date() } });
     });
   }
